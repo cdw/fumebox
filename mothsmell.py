@@ -20,60 +20,6 @@ BOX_SIZE = (1.0, 1.0, 1.0)
 BODY_LEN = 0.01
 ANT_ANG = np.radians(30)
 
-class plume(object):
-    def __init__(self, source=(ra(0,BOX_SIZE[1]), ra(0,BOX_SIZE[2]))):
-        """A time-evolving odorant for our little guy to flap around in"""
-        self.res = 100.0      #Split into 100 straight segments
-        self.X = self.steps(0, BOX_SIZE[0], self.res) #X locs of plume
-        self.Y = np.zeros_like(self.X) #Y of odor slices
-        self.Z = np.zeros_like(self.X) #Z of same
-        self.source = source #Y/Z of the source
-        self.cross = np.zeros((2, len(self.X)))
-        [self.update() for i in range(self.res)]
-    
-    def cross_breeze(self, wind_samples=5, fade = 0.99):
-        """Puff! How do things get blown around?"""
-        samps = self.steps(0, BOX_SIZE[0], wind_samples-1)
-        for i in [0,1]:
-            new_broom = spl.splrep(samps, ra(-0.1,0.1,wind_samples))
-            clean_sweep = spl.splev(self.X, new_broom)
-            self.cross[i,:] = clean_sweep + fade * self.cross[i,:]
-    
-    def blow_downstream(self, sheer_strength=0.01):
-        """Huff! Move it and sheer it!"""
-        self.Y[1:] = sheer_strength * self.cross[0,1:] + self.Y[:-1]
-        self.Y[0] = sheer_strength * self.cross[0,0] + self.source[0]
-        self.Z[1:] = sheer_strength * self.cross[1,1:] + self.Z[:-1]
-        self.Z[0] = sheer_strength * self.cross[1,0] + self.source[1]
-        
-    def update(self):
-        """Let that wind blow"""
-        self.cross_breeze()
-        self.blow_downstream()
-    
-    def _spline_yz(self, x):
-        """Return interpolated values for plume's y/z loc at x"""
-        i = self.X.searchsorted(x)
-        x_samples = self.X[i-1:i+1]
-        y_samples = self.Y[i-1:i+1]
-        z_samples = self.Z[i-1:i+1]
-        y_spline = spl.splrep(x_samples, y_samples)
-        z_spline = spl.splrep(x_samples, z_samples)
-        y, z = spl.splev(x, y_spline), spl.splev(x, z_spline)
-        return y,z
-    
-    def smell(self, loc):
-        """Sniff, sniff... what's that?"""
-        x, y, z = loc
-        Y, Z = self._spline_yz(x)
-        dist = np.hypot(Y-y, Z-z)
-        return 1/np.sqrt(4*pi*x) * np.exp(-dist**2/(4*x))
-        
-    @staticmethod
-    def steps(lower, upper, steps):
-            """A one, and a two; get from here to there in this many"""
-            l,u,s = lower, upper, steps
-            return np.arange(l,u*(1+0.5*(u-l)/s), float(u-l)/s)
 
 def smell(loc):
     """ What's the smell here?"""
@@ -109,18 +55,81 @@ def move_some(location, direction, distance):
     x, y, z, = location
     return (x + r*sin(th)*cos(th), y + r*sin(th)*sin(ph), z + r*cos(ph))
 
+
+class plume(object):
+    def __init__(self, source=(ra(0,BOX_SIZE[1]), ra(0,BOX_SIZE[2]))):
+        """A time-evolving odorant for our little guy to flap around in"""
+        self.res = 100.0      #Split into 100 straight segments
+        self.X = self.steps(0, BOX_SIZE[0], self.res) #X locs of plume
+        self.Y = np.zeros_like(self.X) #Y of odor slices
+        self.Z = np.zeros_like(self.X) #Z of same
+        self.source = source #Y/Z of the source
+        self.cross = np.zeros((2, len(self.X)))
+        [self.update() for i in range(self.res)]
+    
+    def cross_breeze(self, wind_samples=5, fade = 0.99):
+        """Puff! How do things get blown around?"""
+        samps = self.steps(0, BOX_SIZE[0], wind_samples-1)
+        for i in [0,1]:
+            new_broom = spl.splrep(samps, ra(-0.1,0.1,wind_samples))
+            clean_sweep = spl.splev(self.X, new_broom)
+            self.cross[i,:] = clean_sweep + fade * self.cross[i,:]
+    
+    def blow_downstream(self, sheer_strength=0.01):
+        """Huff! Move it and sheer it!"""
+        self.Y[1:] = sheer_strength * self.cross[0,1:] + self.Y[:-1]
+        self.Y[0] = sheer_strength * self.cross[0,0] + self.source[0]
+        self.Z[1:] = sheer_strength * self.cross[1,1:] + self.Z[:-1]
+        self.Z[0] = sheer_strength * self.cross[1,0] + self.source[1]
+        
+    def update(self):
+        """Let that wind blow"""
+        self.cross_breeze()
+        self.blow_downstream()
+    
+    def _spline_yz(self, x):
+        """Return interpolated values for plume's y/z loc at x"""
+        i = self.X.searchsorted(x)
+        #x_samples = self.X[i-2:i+3]
+        #y_samples = self.Y[i-2:i+3]
+        #z_samples = self.Z[i-2:i+3]
+        #y_spline = spl.splrep(x_samples, y_samples)
+        #z_spline = spl.splrep(x_samples, z_samples)
+        #y, z = spl.splev(x, y_spline), spl.splev(x, z_spline)
+        y,z = self.Y[i], self.Z[i]
+        return y,z
+    
+    def smell(self, loc):
+        """Sniff, sniff... what's that?"""
+        x, y, z = loc
+        Y, Z = self._spline_yz(x)
+        dist = np.hypot(Y-y, Z-z)
+        return 1/np.sqrt(4*pi*x) * np.exp(-dist**2/(4*x))
+        
+    @staticmethod
+    def steps(lower, upper, steps):
+            """A one, and a two; get from here to there in this many"""
+            l,u,s = lower, upper, steps
+            return np.arange(l,u*(1+0.5*(u-l)/s), float(u-l)/s)
+
+
 class moth(object):
-    def __init__(self, starting_loc):
+    def __init__(self, starting_loc, plume=plume((0.5,0.5))):
         self.location = starting_loc
         self.location_history = [starting_loc]
         self.direction = (pi*ra(-1, 1), pi*ra(-1, 1))
         self.direction_history = [self.direction]
+        self.plume = plume
     
     def __repr__(self):
         x, y, z, = self.location
         th, ph = self.direction
         return 'Moth at (%0.3f, %0.3f, %0.3f) pointing (%3d, %3d)' % \
             (x,y,z, np.degrees(th), np.degrees(ph))
+
+    def sniff(self, loc):
+        """This fellow goes forth and sniffs the smell"""
+        return self.plume.smell(loc)
     
     def antenna_smell(self):
         """What do the ol' feelers say?"""
@@ -128,14 +137,14 @@ class moth(object):
         loc = self.location
         ant_left, ant_right = ((dire[0]-ANT_ANG, dire[1]), 
                                (dire[0]+ANT_ANG, dire[1]))
-        smell_left = smell(move_some(loc, ant_left, 0.3*BODY_LEN)) 
-        smell_right = smell(move_some(loc, ant_right, 0.3*BODY_LEN)) 
+        smell_left = self.sniff(move_some(loc, ant_left, 0.3*BODY_LEN)) 
+        smell_right = self.sniff(move_some(loc, ant_right, 0.3*BODY_LEN)) 
         return smell_right-smell_left
     
     def decide(self):
         """Which way do you want to go?"""
-        prev = smell(self.location_history[-1])
-        curr = smell(self.location)
+        prev = self.sniff(self.location_history[-1])
+        curr = self.sniff(self.location)
         diff = window(curr - prev, 100, 0.01)
         dire = self.direction
         self.direction_history.append(dire)
@@ -154,6 +163,7 @@ class moth(object):
     def fly(self, time=1):
         """Fly for as long as we like"""
         for timestep in range(time):
+            self.plume.update()
             self.decide()
             self.move()
 
@@ -186,6 +196,43 @@ def animate_moth(moth, num_of_moths=3):
                              fargs=(moths,lines), interval=10)
     plt.show()
 
+def animate_moth_and_plume(moth, plume, num_of_moths=1):
+    # Set up a figure
+    fig = plt.figure(0, figsize=(6,6))
+    ax = p3.Axes3D(fig)
+    lines = []
+    # Set up a plume
+    plume = plume((0.5, 0.5))
+    # Set up some moths
+    moth_locs = lambda:(ra(0,1), ra(0,1), ra(0,1))
+    moths = [moth(moth_locs(), plume) for i in range(num_of_moths)]
+    for moth in moths:
+        x, y, z = zip(*moth.location_history)
+        lines.append(ax.plot(x,y,z)[0])
+    x, y, z = plume.X, plume.Y, plume.Z
+    lines.append(ax.plot(x, y, z)[0])
+    def update(num, moths, plume, lines):
+        for m,l in zip(moths, lines[:-1]):
+            m.fly()
+            x, y, z = zip(*m.location_history)
+            l.set_data(np.array([x,y]))
+            l.set_3d_properties(z)
+        x, y, z = plume.X, plume.Y, plume.Z
+        lines[-1].set_data(np.array([x,y]))
+        lines[-1].set_3d_properties(z)
+        return lines
+    # Make the figure nice
+    ax.set_xlim3d([0.0, BOX_SIZE[0]])
+    ax.set_ylim3d([0.0, BOX_SIZE[1]])
+    ax.set_zlim3d([0.0, BOX_SIZE[2]])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title("Bouncin' around")
+    moth_ani = FuncAnimation(fig, func=update, frames=100, 
+                             fargs=(moths, plume, lines), interval=10)
+    plt.show()
+
 def animate_plume(plume):
     # Set up a figure
     fig = plt.figure(0, figsize=(6,6))
@@ -216,5 +263,5 @@ def animate_plume(plume):
     plt.show()
 
 if __name__ == '__main__':
-    animate_moth(moth)
+    animate_moth_and_plume(moth, plume, 5)
 
