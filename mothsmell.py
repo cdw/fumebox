@@ -49,6 +49,18 @@ def direction_wrap(direction):
             out.append(val)
     return tuple(out)
 
+def location_wrap(location):
+    """Wrap (x,y,z) to BOX_SIZE"""
+    out = []
+    for val, limit in zip(location, BOX_SIZE):
+        if val > limit:
+            out.append(limit)
+        elif val < 0:
+            out.append(0)
+        else:
+            out.append(val)
+    return tuple(out)
+
 def move_some(location, direction, distance):
     """Move a distance in a direction from a location"""
     r, th, ph = distance, direction[0], direction[1]
@@ -129,7 +141,7 @@ class moth(object):
 
     def sniff(self, loc):
         """This fellow goes forth and sniffs the smell"""
-        return self.plume.smell(loc)
+        return smell(loc)
     
     def antenna_smell(self):
         """What do the ol' feelers say?"""
@@ -151,6 +163,8 @@ class moth(object):
         self.direction = direction_wrap((
             dire[0] + pi*ra(-.1, .1)*self.antenna_smell(), 
             dire[1] + pi*ra(-.1, .1)*(1/diff)))
+        for pt in self.direction:
+            assert np.isnan(pt) == False
         return self.direction
     
     def move(self):
@@ -158,6 +172,9 @@ class moth(object):
         loc = self.location
         self.location_history.append(loc)
         self.location = move_some(loc, self.direction, 0.5*BODY_LEN)
+        self.location = location_wrap(self.location)
+        for xyz in self.location:
+            assert np.isnan(xyz) == False
         return self.location
     
     def fly(self, time=1):
@@ -263,5 +280,5 @@ def animate_plume(plume):
     plt.show()
 
 if __name__ == '__main__':
-    animate_moth_and_plume(moth, plume, 5)
+    animate_moth(moth,5)
 
