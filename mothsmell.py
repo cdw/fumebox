@@ -50,7 +50,24 @@ class plume(object):
         """Let that wind blow"""
         self.cross_breeze()
         self.blow_downstream()
-
+    
+    def _spline_yz(self, x):
+        """Return interpolated values for plume's y/z loc at x"""
+        i = self.X.searchsorted(x)
+        x_samples = self.X[i-1:i+1]
+        y_samples = self.Y[i-1:i+1]
+        z_samples = self.Z[i-1:i+1]
+        y_spline = spl.splrep(x_samples, y_samples)
+        z_spline = spl.splrep(x_samples, z_samples)
+        y, z = spl.splev(x, y_spline), spl.splev(x, z_spline)
+        return y,z
+    
+    def smell(self, x, y, z):
+        """Sniff, sniff... what's that?"""
+        Y, Z = self._spline_yz(x)
+        dist = np.hypot(Y-y, Z-z)
+        return 1/np.sqrt(4*pi*x) * np.exp(-dist**2/(4*x))
+        
     @staticmethod
     def steps(lower, upper, steps):
             """A one, and a two; get from here to there in this many"""
@@ -145,29 +162,29 @@ if __name__ == '__main__':
     ax = p3.Axes3D(fig)
     lines = []
     # Set up some moths
-    #moths = [moth((ra(0,1), ra(0,1), ra(0,1))) for i in range(5)]
-    #for moth in moths:
-    #    x, y, z = zip(*moth.location_history)
-    #    lines.append(ax.plot(x,y,z)[0])
-    #def update_moth(num, moths, lines):
-    #    for m,l in zip(moths, lines):
-    #        m.fly()
-    #        x, y, z = zip(*m.location_history)
-    #        l.set_data(np.array([x,y]))
-    #        l.set_3d_properties(z)
-    #    return lines
-    # Set up a plume
-    plumes = [plume((0.5,0.5))]
-    for plume in plumes:
-        x, y, z = plume.X, plume.Y, plume.Z
-        lines.append(ax.plot(x, y, z)[0])
-    def update_plume(num, plumes, lines):
-        for plume, line in zip(plumes, lines):
-            plume.update()
-            x, y, z = plume.X, plume.Y, plume.Z
-            line.set_data(np.array([x,y]))
-            line.set_3d_properties(z)
+    moths = [moth((ra(0,1), ra(0,1), ra(0,1))) for i in range(5)]
+    for moth in moths:
+        x, y, z = zip(*moth.location_history)
+        lines.append(ax.plot(x,y,z)[0])
+    def update_moth(num, moths, lines):
+        for m,l in zip(moths, lines):
+            m.fly()
+            x, y, z = zip(*m.location_history)
+            l.set_data(np.array([x,y]))
+            l.set_3d_properties(z)
         return lines
+    # Set up a plume
+    #plumes = [plume((0.5,0.5))]
+    #for plume in plumes:
+    #    x, y, z = plume.X, plume.Y, plume.Z
+    #    lines.append(ax.plot(x, y, z)[0])
+    #def update_plume(num, plumes, lines):
+    #    for plume, line in zip(plumes, lines):
+    #        plume.update()
+    #        x, y, z = plume.X, plume.Y, plume.Z
+    #        line.set_data(np.array([x,y]))
+    #        line.set_3d_properties(z)
+    #    return lines
     # Make the figure nice
     ax.set_xlim3d([0.0, BOX_SIZE[0]])
     ax.set_ylim3d([0.0, BOX_SIZE[1]])
@@ -176,8 +193,8 @@ if __name__ == '__main__':
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title("Bouncin' around")
-    #moth_ani = FuncAnimation(fig, func=update_moth, frames=100, 
-    #                         fargs=(moths,lines), interval=10)
-    moth_ani = FuncAnimation(fig, func=update_plume, frames=100, 
-                             fargs=(plumes,lines), interval=10)
+    moth_ani = FuncAnimation(fig, func=update_moth, frames=100, 
+                             fargs=(moths,lines), interval=10)
+    #moth_ani = FuncAnimation(fig, func=update_plume, frames=100, 
+    #                         fargs=(plumes,lines), interval=10)
     plt.show()
