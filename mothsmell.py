@@ -62,8 +62,9 @@ class plume(object):
         y, z = spl.splev(x, y_spline), spl.splev(x, z_spline)
         return y,z
     
-    def smell(self, x, y, z):
+    def smell(self, loc):
         """Sniff, sniff... what's that?"""
+        x, y, z = loc
         Y, Z = self._spline_yz(x)
         dist = np.hypot(Y-y, Z-z)
         return 1/np.sqrt(4*pi*x) * np.exp(-dist**2/(4*x))
@@ -156,13 +157,13 @@ class moth(object):
             self.decide()
             self.move()
 
-if __name__ == '__main__':
+def animate_moth(moth, num_of_moths=3):
     # Set up a figure
     fig = plt.figure(0, figsize=(6,6))
     ax = p3.Axes3D(fig)
     lines = []
     # Set up some moths
-    moths = [moth((ra(0,1), ra(0,1), ra(0,1))) for i in range(5)]
+    moths = [moth((ra(0,1), ra(0,1), ra(0,1))) for i in range(num_of_moths)]
     for moth in moths:
         x, y, z = zip(*moth.location_history)
         lines.append(ax.plot(x,y,z)[0])
@@ -173,18 +174,6 @@ if __name__ == '__main__':
             l.set_data(np.array([x,y]))
             l.set_3d_properties(z)
         return lines
-    # Set up a plume
-    #plumes = [plume((0.5,0.5))]
-    #for plume in plumes:
-    #    x, y, z = plume.X, plume.Y, plume.Z
-    #    lines.append(ax.plot(x, y, z)[0])
-    #def update_plume(num, plumes, lines):
-    #    for plume, line in zip(plumes, lines):
-    #        plume.update()
-    #        x, y, z = plume.X, plume.Y, plume.Z
-    #        line.set_data(np.array([x,y]))
-    #        line.set_3d_properties(z)
-    #    return lines
     # Make the figure nice
     ax.set_xlim3d([0.0, BOX_SIZE[0]])
     ax.set_ylim3d([0.0, BOX_SIZE[1]])
@@ -195,6 +184,37 @@ if __name__ == '__main__':
     ax.set_title("Bouncin' around")
     moth_ani = FuncAnimation(fig, func=update_moth, frames=100, 
                              fargs=(moths,lines), interval=10)
-    #moth_ani = FuncAnimation(fig, func=update_plume, frames=100, 
-    #                         fargs=(plumes,lines), interval=10)
     plt.show()
+
+def animate_plume(plume):
+    # Set up a figure
+    fig = plt.figure(0, figsize=(6,6))
+    ax = p3.Axes3D(fig)
+    lines = []
+    # Set up a plume
+    plumes = [plume((0.5,0.5))]
+    for plume in plumes:
+        x, y, z = plume.X, plume.Y, plume.Z
+        lines.append(ax.plot(x, y, z)[0])
+    def update_plume(num, plumes, lines):
+        for plume, line in zip(plumes, lines):
+            plume.update()
+            x, y, z = plume.X, plume.Y, plume.Z
+            line.set_data(np.array([x,y]))
+            line.set_3d_properties(z)
+        return lines
+    # Make the figure nice
+    ax.set_xlim3d([0.0, BOX_SIZE[0]])
+    ax.set_ylim3d([0.0, BOX_SIZE[1]])
+    ax.set_zlim3d([0.0, BOX_SIZE[2]])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title("Bouncin' around")
+    plume_ani = FuncAnimation(fig, func=update_plume, frames=100, 
+                             fargs=(plumes,lines), interval=10)
+    plt.show()
+
+if __name__ == '__main__':
+    animate_moth(moth)
+
