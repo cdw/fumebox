@@ -114,6 +114,10 @@ class plume(object):
     def smell(self, loc):
         """Sniff, sniff... what's that?"""
         x, y, z = loc
+        if 0>x or x>BOX_SIZE[0] or 0>y or y>BOX_SIZE[1] \
+               or 0>z or z>BOX_SIZE[2]:
+            print "Moth sniffing outside the box"
+            return 0.0
         Y, Z = self._spline_yz(x)
         dist = np.hypot(Y-y, Z-z)
         return 1/np.sqrt(4*pi*x) * np.exp(-dist**2/(4*x))
@@ -138,10 +142,18 @@ class moth(object):
         th, ph = self.direction
         return 'Moth at (%0.3f, %0.3f, %0.3f) pointing (%3d, %3d)' % \
             (x,y,z, np.degrees(th), np.degrees(ph))
-
+    
+    def check_loc(self, loc=None):
+        if loc is None: loc = self.location
+        x, y, z = loc
+        if 0>x or x>BOX_SIZE[0] or 0>y or y>BOX_SIZE[1] or 0>z or z>BOX_SIZE[2]:
+            print "Location is outside box, moth is pulling a phoenix"
+            self.__init__((ra(0,1), ra(0,1), ra(0,1)), plume=self.plume)
+    
     def sniff(self, loc):
         """This fellow goes forth and sniffs the smell"""
-        return smell(loc)
+        #return smell(loc)
+        return self.plume.smell(loc)
     
     def antenna_smell(self):
         """What do the ol' feelers say?"""
@@ -172,7 +184,7 @@ class moth(object):
         loc = self.location
         self.location_history.append(loc)
         self.location = move_some(loc, self.direction, 0.5*BODY_LEN)
-        self.location = location_wrap(self.location)
+        self.check_loc(self.location)
         for xyz in self.location:
             assert np.isnan(xyz) == False
         return self.location
@@ -280,5 +292,5 @@ def animate_plume(plume):
     plt.show()
 
 if __name__ == '__main__':
-    animate_plume(plume)
+    animate_moth_and_plume(moth, plume, 5)
 
