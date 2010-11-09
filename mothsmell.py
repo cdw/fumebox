@@ -280,5 +280,5 @@ def animate_plume(plume):
     plt.show()
 
 if __name__ == '__main__':
-    animate_moth(moth,5)
+    animate_plume(plume)
 
