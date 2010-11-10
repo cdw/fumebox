@@ -49,18 +49,6 @@ def direction_wrap(direction):
             out.append(val)
     return tuple(out)
 
-def location_wrap(location):
-    """Wrap (x,y,z) to BOX_SIZE"""
-    out = []
-    for val, limit in zip(location, BOX_SIZE):
-        if val > limit:
-            out.append(limit)
-        elif val < 0:
-            out.append(0)
-        else:
-            out.append(val)
-    return tuple(out)
-
 def move_some(location, direction, distance):
     """Move a distance in a direction from a location"""
     r, th, ph = distance, direction[0], direction[1]
