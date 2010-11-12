@@ -63,7 +63,7 @@ class plume(object):
         self.X = self.steps(0, BOX_SIZE[0], self.res) #X locs of plume
         self.Y = np.zeros_like(self.X) #Y of odor slices
         self.Z = np.zeros_like(self.X) #Z of same
-        self.source = source #Y/Z of the source
+        self.source = list(source) #Y/Z of the source
         self.cross = np.zeros((2, len(self.X)))
         [self.update() for i in range(self.res)]
     
@@ -118,7 +118,7 @@ class plume(object):
 
 
 class moth(object):
-    def __init__(self, starting_loc, plume=plume((0.5,0.5))):
+    def __init__(self, starting_loc, plume=plume([0.5,0.5])):
         self.location = starting_loc
         self.location_history = [starting_loc]
         self.direction = (pi*ra(-1, 1), pi*ra(-1, 1))
@@ -161,8 +161,8 @@ class moth(object):
         dire = self.direction
         self.direction_history.append(dire)
         self.direction = direction_wrap((
-            dire[0] + pi*ra(-.1, .1)*self.antenna_smell(), 
-            dire[1] + pi*ra(-.1, .1)*(1/diff)))
+            dire[0] + pi*ra(-.01, .01)*self.antenna_smell(), 
+            dire[1] + pi*ra(-.01, .01)*(1/diff)))
         for pt in self.direction:
             assert np.isnan(pt) == False
         return self.direction
@@ -180,7 +180,6 @@ class moth(object):
     def fly(self, time=1):
         """Fly for as long as we like"""
         for timestep in range(time):
-            self.plume.update()
             self.decide()
             self.move()
 
@@ -219,7 +218,7 @@ def animate_moth_and_plume(moth, plume, num_of_moths=1):
     ax = p3.Axes3D(fig)
     lines = []
     # Set up a plume
-    plume = plume((0.5, 0.5))
+    plume = plume([0.5, 0.5])
     # Set up some moths
     moth_locs = lambda:(ra(0,1), ra(0,1), ra(0,1))
     moths = [moth(moth_locs(), plume) for i in range(num_of_moths)]
@@ -229,6 +228,7 @@ def animate_moth_and_plume(moth, plume, num_of_moths=1):
     x, y, z = plume.X, plume.Y, plume.Z
     lines.append(ax.plot(x, y, z)[0])
     def update(num, moths, plume, lines):
+        plume.update()
         for m,l in zip(moths, lines[:-1]):
             m.fly()
             x, y, z = zip(*m.location_history)
@@ -256,7 +256,7 @@ def animate_plume(plume):
     ax = p3.Axes3D(fig)
     lines = []
     # Set up a plume
-    plumes = [plume((0.5,0.5))]
+    plumes = [plume([0.5,0.5])]
     for plume in plumes:
         x, y, z = plume.X, plume.Y, plume.Z
         lines.append(ax.plot(x, y, z)[0])
@@ -281,4 +281,4 @@ def animate_plume(plume):
 
 if __name__ == '__main__':
     animate_moth_and_plume(moth, plume, 5)
-
+    #animate_plume(plume)
