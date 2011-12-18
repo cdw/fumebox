@@ -10,6 +10,7 @@ at any given location on any given timestep.
 
 import numpy as np
 from numpy.random import uniform as ra
+from numpy.random import normal as norm
 from scipy import interpolate as spl
 from numpy import pi, sin, cos
 import matplotlib.pyplot as plt
@@ -19,7 +20,7 @@ from animation import FuncAnimation
 BOX_SIZE = (1.0, 1.0, 1.0)
 BODY_LEN = 0.01
 ANT_ANG = np.radians(30)
-
+SOURCE_WANDERS = True
 
 def smell(loc):
     """ What's the smell here?"""
@@ -64,6 +65,7 @@ class plume(object):
         self.Y = np.zeros_like(self.X) #Y of odor slices
         self.Z = np.zeros_like(self.X) #Z of same
         self.source = list(source) #Y/Z of the source
+        self.original = source #Initial source location
         self.cross = np.zeros((2, len(self.X)))
         [self.update() for i in range(self.res)]
     
@@ -81,9 +83,18 @@ class plume(object):
         self.Y[0] = sheer_strength * self.cross[0,0] + self.source[0]
         self.Z[1:] = sheer_strength * self.cross[1,1:] + self.Z[:-1]
         self.Z[0] = sheer_strength * self.cross[1,0] + self.source[1]
-        
+    
+    def source_wander(self, scale = BODY_LEN):
+        """Where is that smell coming from?"""
+        if SOURCE_WANDERS is True:
+            self.source = [s+norm(scale=scale) for s in self.source]
+            if any((self.source[0]<0, self.source[0]>BOX_SIZE[0],
+                    self.source[0]<0, self.source[0]>BOX_SIZE[0])):
+                self.source_wander(scale)
+    
     def update(self):
         """Let that wind blow"""
+        self.source_wander()
         self.cross_breeze()
         self.blow_downstream()
     
