@@ -31,9 +31,9 @@ def smell(loc):
 
 def window(x, up, dn):
     """Make that number fit in a window."""
-    if x>=up:   
+    if x >= up:   
         return up
-    elif x<=dn: 
+    elif x <= dn: 
         return dn
     else:
         return x
@@ -43,9 +43,9 @@ def direction_wrap(direction):
     out = []
     for val in direction:
         if val > pi:
-            out.append(np.mod(val,pi))
+            out.append(np.mod(val, pi))
         elif val < -pi:
-            out.append(np.mod(val,-pi))
+            out.append(np.mod(val, -pi))
         else:
             out.append(val)
     return tuple(out)
@@ -123,9 +123,9 @@ class plume(object):
         
     @staticmethod
     def steps(lower, upper, steps):
-            """A one, and a two; get from here to there in this many"""
-            l,u,s = lower, upper, steps
-            return np.arange(l,u*(1+0.5*(u-l)/s), float(u-l)/s)
+        """A one, and a two; get from here to there in this many"""
+        l,u,s = lower, upper, steps
+        return np.arange(l,u*(1+0.5*(u-l)/s), float(u-l)/s)
 
 
 class moth(object):
@@ -240,7 +240,7 @@ def animate_moth_and_plume(moth, plume, num_of_moths=1):
     lines.append(ax.plot(x, y, z)[0])
     def update(num, moths, plume, lines):
         plume.update()
-        for m,l in zip(moths, lines[:-1]):
+        for m, l in zip(moths, lines[:-1]):
             m.fly()
             x, y, z = zip(*m.location_history)
             l.set_data(np.array([x,y]))
