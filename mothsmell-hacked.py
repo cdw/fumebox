@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
+"""
+Created on Fri Oct 24 17:39:00 2014
 
-""" odor.py
+@author: richard
+
 Created by Dave Williams on 2010-09-12
 
 This defines functions that return the current 'smell' 
